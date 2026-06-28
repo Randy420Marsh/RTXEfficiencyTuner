@@ -1,0 +1,15 @@
+# PyTorch with CUDA 13.2 (RTX 50-series / Blackwell)
+# If using an older GPU, replace cu132 with your CUDA version (e.g. cu121, cu124)
+--extra-index-url https://download.pytorch.org/whl/cu132
+torch
+torchvision
+
+# Plotting (tune_and_graph.py)
+matplotlib
+
+# NVIDIA GPU monitoring — official NVML bindings (rtx_tuner_v3.py)
+# Replaces the deprecated third-party 'pynvml' package; same import name
+nvidia-ml-py
+
+# Qt GUI (rtx_tuner_v3.py)
+PyQt6

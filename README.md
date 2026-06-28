@@ -72,21 +72,55 @@ sudo systemctl restart cpufrequtils
 
 ## Requirements
 
-| Dependency | Purpose |
-|---|---|
-| NVIDIA GPU with `nvidia-smi` | Clock locking (`-lgc`), power limits (`-pl`), stats |
-| PyTorch with CUDA | Compute workload (8192×8192 FP32 matmul) |
-| `matplotlib` | Result plots |
-| `nvidia-settings` + Coolbits=4 | Fan speed override (optional but strongly recommended) |
-| `sudo` access | `nvidia-smi -lgc` and `-pl` require root |
+### System packages (apt)
 
 ```bash
-create venv:
+sudo apt install \
+    libxcb-cursor0 \
+    nvidia-settings \
+    cpufrequtils \
+    liquidctl
+```
+
+| Package | Purpose |
+|---|---|
+| `libxcb-cursor0` | Required by Qt 6.5+ to load the XCB platform plugin (GUI will crash without it) |
+| `nvidia-settings` | Fan speed override and clock offsets (requires Coolbits=4 in Xorg config) |
+| `cpufrequtils` | Persistent CPU governor configuration via `/etc/default/cpufrequtils` |
+| `liquidctl` | Corsair HX-i PSU monitoring and single-rail mode switching |
+
+> `sudo` access is also required — `nvidia-smi -lgc`, `-pl`, and `nvidia-settings` fan control all need root.
+
+### Python packages
+
+```bash
+# Create venv
 uv venv venv --python 3.14
 source ./venv/bin/activate
+
+# Install all dependencies
+uv pip install -r requirements.txt
+```
+
+Or manually:
+
+```bash
+# tune_and_graph.py
 uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu132
 uv pip install matplotlib
+
+# rtx_tuner_v3.py
+uv pip install nvidia-ml-py PyQt6
 ```
+
+| Package | Version used | Purpose |
+|---|---|---|
+| `torch` + `torchvision` | cu132 build | 8192×8192 FP32 matmul compute workload |
+| `matplotlib` | latest | Efficiency curve plots |
+| `nvidia-ml-py` | 13.x | NVML bindings for GPU stats in the GUI (NVIDIA's official package — replaces deprecated `pynvml`) |
+| `PyQt6` | 6.x | Qt GUI framework for `rtx_tuner_v3.py` |
+
+> **CUDA version:** The `requirements.txt` targets CUDA 13.2 (`cu132`) for RTX 50-series (Blackwell) GPUs. For older cards replace `cu132` with your installed CUDA version — `cu121` or `cu124` are common for RTX 40-series. Check with `nvidia-smi` (top-right corner shows the CUDA version).
 
 ### Coolbits fan control (one-time setup)
 
