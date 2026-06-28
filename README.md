@@ -7,6 +7,57 @@ Built and tested on a **Gigabyte Aorus GeForce RTX 5090 Xtreme Waterforce 32G **
 
 ---
 
+## System Preparation
+
+Accurate power measurements and stable high-TDP runs require a few system-level settings beyond the Python environment. The included `apply_performance.sh` handles all of them in one shot.
+
+```bash
+sudo bash apply_performance.sh
+```
+
+### PSU single-rail mode (Corsair HX1200i and compatible)
+
+Modern high-end PSUs split their 12V output across multiple virtual current-limited rails for safety. Under rapid GPU power transients (e.g. the RTX 5090 spiking from idle to 600W in milliseconds), per-rail current limiting can cause momentary undervoltage and GPU resets or throttling — even when total power draw is within spec.
+
+**Single-rail mode** removes the per-rail caps and presents the full PSU capacity as one rail, eliminating this source of instability for controlled workloads.
+
+The script checks and reports the current mode via `liquidctl`:
+
+```bash
+# Check current Corsair HX1200i status
+sudo rmmod corsair-psu          # drop kernel driver so liquidctl gets direct USB access
+liquidctl --match corsair status
+sudo modprobe corsair-psu       # reload the kernel driver for sensor monitoring
+```
+
+To enable single-rail mode persistently, install and enable the `hx1200i-singlerail` systemd service:
+
+```bash
+sudo systemctl enable --now hx1200i-singlerail.service
+```
+
+> **Compatibility:** Single-rail mode switching is supported on Corsair HX-i series (HX1000i, HX1200i, HX1500i) and similar PSUs with USB monitoring interfaces. PSUs without USB monitoring have a **fixed** rail configuration set at the factory — check your PSU's spec sheet under "12V rails" to see whether yours is single or multi-rail. Many modern high-wattage units (850W+) ship single-rail, but mid-range and older models often do not.
+
+### CPU performance governor
+
+A CPU in `powersave` mode aggressively downclocks on idle and may not respond fast enough to serve the PyTorch data pipeline, adding latency jitter to ops/W measurements. `apply_performance.sh` locks all cores to the `performance` governor for the duration of a tuning run, then verifies it stuck (some background services fight it back):
+
+```bash
+# Manual equivalent if you prefer not to use the script
+for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+    echo performance | sudo tee "$gov" > /dev/null
+done
+```
+
+To make this permanent across reboots, add `GOVERNOR="performance"` to `/etc/default/cpufrequtils` and restart the service:
+
+```bash
+sudo nano /etc/default/cpufrequtils   # set GOVERNOR="performance"
+sudo systemctl restart cpufrequtils
+```
+
+---
+
 ## Features
 
 - **Auto-detects** clock range and stock power limit from `nvidia-smi` — no manual config needed
