@@ -147,13 +147,13 @@ The tool computes two independent efficiency figures at each clock step:
 
 **MHz/W** — clock efficiency (proxy metric)
 
-$$\text{MHz/W} = \frac{\text{actual\_clock (MHz)}}{\text{avg\_power (W)}}$$
+$$\text{MHz/W} = \frac{\text{actual clock (MHz)}}{\text{avg power (W)}}$$
 
 This tells you how many MHz you get per watt. It's a fast, stable measurement but doesn't account for how efficiently those MHz translate into real work — at high clocks the GPU runs its memory subsystem and fixed-function units at full power even if the compute throughput doesn't scale linearly.
 
 **ops/W** — throughput efficiency (true metric)
 
-$$\text{ops/W} = \frac{\text{matmuls/sec}}{\text{avg\_power (W)}}$$
+$$\text{ops/W} = \frac{\text{matmuls/sec}}{\text{avg power (W)}}$$
 
 This measures actual compute throughput (8192×8192 FP32 matrix multiplications per second) divided by wall power. It captures real-world efficiency, including the overhead of the memory controller, voltage regulators, and idle logic that doesn't scale with clock frequency.
 
